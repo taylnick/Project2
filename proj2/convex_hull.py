@@ -69,7 +69,10 @@ class ConvexHullSolver(QObject):
 
         t3 = time.time()
         # this is a dummy polygon of the first 3 unsorted points
-        polygon = self.find_convex_hull(points)
+        hull = self.find_convex_hull(points)
+        polygon = [QLineF(hull[i],hull[(i+1)%len(hull)]) for i in range(len(hull))]
+        # polygon = [QLineF(points[i],points[(i+1)%3]) for i in range(3)]
+        # polygon = self.find_convex_hull(points)
         # TODO: REPLACE THE LINE ABOVE WITH A CALL TO YOUR DIVIDE-AND-CONQUER CONVEX HULL SOLVER
         t4 = time.time()
 
@@ -86,6 +89,8 @@ class ConvexHullSolver(QObject):
         leftHull = self.find_convex_hull(points[0:midpoint])
         rightHull = self.find_convex_hull(points[midpoint:])
         newHull = self.merge(leftHull, rightHull)
+        poly = [QLineF(newHull[i],newHull[(i+1)%len(newHull)]) for i in range(len(newHull))]
+        self.showHull(poly, color=BLUE)
         return newHull
 
     def merge(self, left, right):
