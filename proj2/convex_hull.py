@@ -2,8 +2,8 @@ from proj2.which_pyqt import PYQT_VER
 
 if PYQT_VER == 'PYQT5':
     from PyQt5.QtCore import QLineF, QPointF, QObject
-elif PYQT_VER == 'PYQT4':
-    from PyQt4.QtCore import QLineF, QPointF, QObject
+# elif PYQT_VER == 'PYQT4':
+#     from PyQt4.QtCore import QLineF, QPointF, QObject
 else:
     raise Exception('Unsupported Version of PyQt: {}'.format(PYQT_VER))
 
@@ -16,7 +16,7 @@ BLUE = (0, 0, 255)
 
 # Global variable that controls the speed of the recursion automation, in seconds
 #
-PAUSE = 0.25
+PAUSE = 0.5
 
 
 #
@@ -70,7 +70,7 @@ class ConvexHullSolver(QObject):
         t3 = time.time()
         # this is a dummy polygon of the first 3 unsorted points
         hull = self.find_convex_hull(points)
-        polygon = [QLineF(hull[i],hull[(i+1)%len(hull)]) for i in range(len(hull))]
+        polygon = self.make_poly(hull)
         # polygon = [QLineF(points[i],points[(i+1)%3]) for i in range(3)]
         # polygon = self.find_convex_hull(points)
         # TODO: REPLACE THE LINE ABOVE WITH A CALL TO YOUR DIVIDE-AND-CONQUER CONVEX HULL SOLVER
@@ -89,9 +89,14 @@ class ConvexHullSolver(QObject):
         leftHull = self.find_convex_hull(points[0:midpoint])
         rightHull = self.find_convex_hull(points[midpoint:])
         newHull = self.merge(leftHull, rightHull)
-        poly = [QLineF(newHull[i],newHull[(i+1)%len(newHull)]) for i in range(len(newHull))]
+        poly = self.make_poly(newHull)
         self.showHull(poly, color=BLUE)
+        # self.eraseHull(poly)
         return newHull
+
+    def make_poly(self, hull):
+        poly = [QLineF(hull[i], hull[(i + 1) % len(hull)]) for i in range(len(hull))]
+        return poly
 
     def merge(self, left, right):
         ltop = left[-1]
@@ -100,29 +105,37 @@ class ConvexHullSolver(QObject):
         rbottom = right[0]
 
         # find left top and bottom
-        if len(left) > 2:
-            for i in left:
-                if i.x() < ltop.x() and i.y() > ltop.y():
-                    temp = ltop
-                    ltop = i
-                    if temp != lbottom:
-                        left.remove(temp)
-                elif i.x() < lbottom.x() and i.y() < lbottom.y():
-                    temp = lbottom
-                    lbottom = i
-                    left.remove(temp)
 
-        # find right top and bottom
-        if len(right) > 2:
-            for i in right:
-                if i.x() > rtop.x() and i.y() > rtop.y():
-                    temp = rtop
-                    rtop = i
-                    if temp != rbottom:
-                        right.remove(temp)
-                elif i.x() > rbottom.x() and i.y() < rbottom.y():
-                    temp = rbottom
-                    rbottom = i
+        for p in reversed(left):
+            # find ltop
+            if self.find_slope(p, rtop) < self.find_slope(ltop, rtop):
+                temp = ltop
+                ltop = p
+                if temp != lbottom:
+                    left.remove(temp)
+            # find lbottom
+            elif self.find_slope(p, rtop) > self.find_slope(lbottom, rtop):
+                temp = lbottom
+                lbottom = p
+                if temp != ltop:
+                    left.remove(temp)
+        for p in right:
+            # find rtop using ltop
+            if self.find_slope(ltop, p) > self.find_slope(ltop, rtop):
+                temp = rtop
+                rtop = p
+                if temp != rbottom:
+                    right.remove(temp)
+            # find rbottom using lbottom
+            elif self.find_slope(lbottom, p) < self.find_slope(lbottom, rbottom):
+                temp = rbottom
+                rbottom = p
+                if temp != rtop:
                     right.remove(temp)
 
         return left + right
+
+    def find_slope(self, p1, p2):
+        line = QLineF(p1, p2)
+        angle = line.angle()
+        return angle
