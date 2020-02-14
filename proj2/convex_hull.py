@@ -89,53 +89,96 @@ class ConvexHullSolver(QObject):
         leftHull = self.find_convex_hull(points[0:midpoint])
         rightHull = self.find_convex_hull(points[midpoint:])
         newHull = self.merge(leftHull, rightHull)
-        poly = self.make_poly(newHull)
-        self.showHull(poly, color=BLUE)
-        # self.eraseHull(poly)
+        self.show_poly(leftHull, GREEN)
+        self.show_poly(rightHull, RED)
+        self.show_poly(newHull, BLUE)
+
+        self.eraseHull(leftHull)
+        self.eraseHull(rightHull)
+        self.eraseHull(newHull)
         return newHull
+
+    def show_poly(self, hull, color):
+        poly = self.make_poly(hull)
+        self.showHull(poly, color)
 
     def make_poly(self, hull):
         poly = [QLineF(hull[i], hull[(i + 1) % len(hull)]) for i in range(len(hull))]
         return poly
 
     def merge(self, left, right):
-        ltop = left[-1]
-        lbottom = left[-1]
-        rtop = right[0]
-        rbottom = right[0]
+        lt = left[0]
+        lb = left[0]
+        rt = right[0]
+        rb = right[0]
 
+        l_len = len(left)
+        r_len = len(right)
+
+        rt_found = False
+        lt_found = False
+        rb_found = False
+        lb_found = False
         # find left top and bottom
+        while True:
+            while not rt_found or not lt_found:
+                for p in left:
+                    if self.find_slope(rt, p) < self.find_slope(rt, lt):
+                        lt = p
+                        lt_found = True
+                        rt_found = False
+                    elif self.find_slope(rt, p) >= self.find_slope(rt, lt):
+                        lt_found = True
+                for q in right:
+                    if self.find_slope(q, lt) > self.find_slope(rt, lt):
+                        rt = q
+                        lt_found = False
+                        rt_found = True
+                    elif self.find_slope(q, lt) <= self.find_slope(rt, lt):
+                        rt_found = True
 
-        for p in reversed(left):
-            # find ltop
-            if self.find_slope(p, rtop) < self.find_slope(ltop, rtop):
-                temp = ltop
-                ltop = p
-                if temp != lbottom:
-                    left.remove(temp)
-            # find lbottom
-            elif self.find_slope(p, rtop) > self.find_slope(lbottom, rtop):
-                temp = lbottom
-                lbottom = p
-                if temp != ltop:
-                    left.remove(temp)
-        for p in right:
-            # find rtop using ltop
-            if self.find_slope(ltop, p) > self.find_slope(ltop, rtop):
-                temp = rtop
-                rtop = p
-                if temp != rbottom:
-                    right.remove(temp)
-            # find rbottom using lbottom
-            elif self.find_slope(lbottom, p) < self.find_slope(lbottom, rbottom):
-                temp = rbottom
-                rbottom = p
-                if temp != rtop:
-                    right.remove(temp)
+            while not lb_found or not rb_found:
+                # find lbottom
+                for p in left:
+                    if self.find_slope(rb, p) > self.find_slope(rb, lb):
+                        lb = p
+                        lb_found = True
+                        rb_found = False
+                    elif self.find_slope(rb, p) <= self.find_slope(rb, lb):
+                        lb_found = True
+                for q in right:
+                    # find rbottom using lbottom
+                    if self.find_slope(q, lb) < self.find_slope(rb, lb):
+                        rb = q
+                        rb_found = True
+                        lb_found = False
+                    elif self.find_slope(q, lb) >= self.find_slope(rb, lb):
+                        rb_found = True
+            if lb_found and rb_found and rt_found and lt_found:
+                break
 
-        return left + right
+        lbegin = left.index(lb)
+        lend = left.index(lt)
+        if lend > lbegin:
+            new_left = left[lbegin: lend + 1]
+        else:
+            # new_left = [left[i % l_len] for i in range(lbegin, l_len + lend + 1)]
+            new_left = left[lbegin:] + left[:lend + 1]
+        # new_right = right[right.index(rt): right.index(rb) + 1]
+
+        rbegin = right.index(rt)
+        rend = right.index(rb)
+        if rend > rbegin:
+            new_right = right[rbegin: rend + 1]
+        else:
+            # new_right = [right[i % r_len] for i in range(rbegin, r_len + rend + 1)]
+            new_right = right[rbegin:] + right[:rend + 1]
+        # poly = [QLineF(hull[i], hull[(i + 1) % len(hull)]) for i in range(len(hull))]
+        # new_right = [[right[i + 1 % r_len] for i in range(right.index(rt), right.index(rb))]]
+        return new_left + new_right
 
     def find_slope(self, p1, p2):
-        line = QLineF(p1, p2)
-        angle = line.angle()
-        return angle
+        # line = QLineF(p1, p2)
+        # angle = line.angle()
+        slope = (p2.y() - p1.y()) / (p2.x() - p1.x())
+        return slope
