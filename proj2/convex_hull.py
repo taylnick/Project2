@@ -16,7 +16,7 @@ BLUE = (0, 0, 255)
 
 # Global variable that controls the speed of the recursion automation, in seconds
 #
-PAUSE = 0.5
+PAUSE = 0.0
 
 
 #
@@ -83,19 +83,23 @@ class ConvexHullSolver(QObject):
 
     def find_convex_hull(self, points):
         length = len(points)
+        # base case
         if length == 1:
             return points
+        # find midpoint
         midpoint = int(length / 2)
+        # divide and conquer
         leftHull = self.find_convex_hull(points[0:midpoint])
         rightHull = self.find_convex_hull(points[midpoint:])
         newHull = self.merge(leftHull, rightHull)
-        self.show_poly(leftHull, GREEN)
-        self.show_poly(rightHull, RED)
-        self.show_poly(newHull, BLUE)
-
-        self.eraseHull(leftHull)
-        self.eraseHull(rightHull)
-        self.eraseHull(newHull)
+        # display stuff
+        # self.show_poly(leftHull, GREEN)
+        # self.show_poly(rightHull, RED)
+        # self.show_poly(newHull, BLUE)
+        #
+        # self.eraseHull(leftHull)
+        # self.eraseHull(rightHull)
+        # self.eraseHull(newHull)
         return newHull
 
     def show_poly(self, hull, color):
@@ -107,6 +111,7 @@ class ConvexHullSolver(QObject):
         return poly
 
     def merge(self, left, right):
+        # initalize to the extremes.
         lt = left[0]
         lb = left[0]
         rt = right[0]
@@ -115,6 +120,7 @@ class ConvexHullSolver(QObject):
         l_len = len(left)
         r_len = len(right)
 
+        # These flags are helpful
         rt_found = False
         lt_found = False
         rb_found = False

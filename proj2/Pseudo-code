@@ -1,0 +1,73 @@
+
+
+            FindConvexHull(myarray[n])
+                //base case
+O(1)            if myarray.length() ==1
+                    return myarray
+O(1)            midpoint = half array.length()
+O(n/2)          leftHull = findConvexHull(myarray[0 . . . midpoint])
+O(n/2)          rightHull = findConvexHull(myarray[midpoint . . . n])
+
+~O(4n) + c      return merge(leftHull, rightHull)
+
+
+
+               merge(left, right)
+O(1)            ltop = lbottom = left[0]
+O(1)            rtop = rbottom = right[0]
+
+O(2n)          //find Top tangent and bottom tangent
+c               while true
+c                    while not done with top
+    O(n)               for items in left:
+         c                  if check slope
+         c                      set flags
+         c                  elif check slope
+         c                      set flag
+    O(n)                for items in right:
+         c                   if check slope:
+         c                       set flags
+         c                   elif check slope
+         c                       set flags
+
+O(2n)               while not done with bottom:
+     O(n)                for items in left:
+         c                  if check slope
+         c                      set flags
+         c                  elif check slope
+         c                      set flag
+     O(n)              for items in right:
+         c                  if check slope:
+         c                      set flags
+         c                  elif check slope
+         c                      set flags
+
+c               check all flags
+
+c               assign values
+c               check constraints
+n               add numbers to new list
+
+c               assign right values
+c               check constraints
+n               add numbers to new list
+
+c               return new left + new right
+
+
+
+
+Looking at the Master theorem, here each problem is being divided
+into two sub-problems of half the size. Then each node is doing
+about O(4n) work.
+This can be simplified to T(n) = 2T(n/2) + O(n)
+which the lovely theorem results to O(n log n).
+
+My implementation seems to be a little heavier on the nodes than the ideal.
+
+
+***************   GRAPH EXPLANATION   ********************
+It took a litle bit of manipulating, but once I figured out how to graph it with the log scale,
+the pattern became clear. My desktop is pretty fast, so it makes sense that it would run faster.
+However, it still fits with the n log(n) pattern. Although the factor is large, O(n log n) is
+clearly an upper bound of this function.
